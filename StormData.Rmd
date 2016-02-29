@@ -1,0 +1,39 @@
+---
+title: "The Effect of Severe Weather on Public Health and the Economy"
+output: html_document
+---
+
+This report investigates the effect storms and other severe weather events can cause both on public health and the economy of the United States. These severe events can result in fatalities, injuries, and property damage and finding key contributers can assist in the mitigation of such outcomes. My analysis has two parts. We see which extreme weather event has the greatest cost on, first, public health -- both fatalities and injuries and, second, on the U.S. economy.
+
+## Data Processing
+Just so paperwork is in order, these packages are required to perform the analysis.
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+The data for this study is sourced from the National Climatic Data Center (NCDC), downloaded using the link found in the source code below (accessed 29/02/2015). The NCDC receives this data from the National Weather Service, who collate information from county, state and federal emergency management  officials, local law enforcement officials, skywarn spotters, etc. Documentation about how some of the variables are constructed/defined can be found [here](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf) (accessed 29/02/2015).
+```{r, echo=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
+temp <- tempfile()
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2", temp, mode = "wb")
+StormData <- read.csv(temp)
+unlink(temp)
+```
+
+## Results
+In this section we investigate the data 
+
+### Severe weather and public health
+Here we determine the main contributing severe weather events that are harmful to public health.
+
+
+```{r, echo=TRUE}
+StormDataHarm <- select(StormData, EVTYPE, FATALITIES, INJURIES)
+StormDataHarm <- mutate(StormDataHarm, HARMED = FATALITIES + INJURIES)
+
+aggHarm <- aggregate(StormDataHarm$HARMED, list(Event = StormDataHarm$EVTYPE),
+                           sum, na.rm = TRUE)
+
+aggHarm <- arrange(aggHarm, desc(x))
+ggplot(data = aggHarm[1:5,], aes(Event, x)) + geom_bar(stat="identity")
+```
