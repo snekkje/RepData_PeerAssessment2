@@ -21,19 +21,19 @@ unlink(temp)
 ```
 
 ## Results
-In this section we investigate the data 
+In this section we investigate the data processed in the previous section. 
 
 ### Severe weather and public health
-Here we determine the main contributing severe weather events that are harmful to public health.
-
-
+Here we determine the main contributing severe weather events that are harmful to public health. We assume that public health is affected by both fatalities and injuries and so both of these outcomes are added together and put in a new column as the variable "HARMED". We sum together those harmed with respect to each weather event and then list them in descending order.
 ```{r, echo=TRUE}
 StormDataHarm <- select(StormData, EVTYPE, FATALITIES, INJURIES)
 StormDataHarm <- mutate(StormDataHarm, HARMED = FATALITIES + INJURIES)
 
-aggHarm <- aggregate(StormDataHarm$HARMED, list(Event = StormDataHarm$EVTYPE),
-                           sum, na.rm = TRUE)
-
+aggHarm <- aggregate(StormDataHarm$HARMED, list(Event = StormDataHarm$EVTYPE), sum, na.rm = TRUE)
 aggHarm <- arrange(aggHarm, desc(x))
-ggplot(data = aggHarm[1:5,], aes(Event, x)) + geom_bar(stat="identity")
+```
+
+In Figure 1 we see the top five weather events that cause the most harm to public health. 
+```{r, echo=TRUE}
+ggplot(data = aggHarm[1:5,], aes(Event, x)) + geom_bar(stat="identity") + ylab("Number of cases")
 ```
