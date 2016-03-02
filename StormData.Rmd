@@ -12,7 +12,7 @@ library(dplyr)
 library(ggplot2)
 ```
 
-The data for this study is sourced from the National Climatic Data Center (NCDC), downloaded using the link found in the source code below (accessed 29/02/2015). The NCDC receives this data from the National Weather Service, who collate information from county, state and federal emergency management  officials, local law enforcement officials, skywarn spotters, etc. Documentation about how some of the variables are constructed/defined can be found [here](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf) (accessed 29/02/2015).
+The data for this study is sourced from the National Climatic Data Center (NCDC), downloaded using the link found in the source code below (accessed 29/02/2015). The NCDC receives this data from the National Weather Service, who collate information from county, state and federal emergency management  officials, local law enforcement officials, skywarn spotters, etc. Documentation about how some of the variables are constructed/defined can be found [here](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf) (accessed 29/02/2015). The events in the database start in the year 1950 and end in November 2011.
 ```{r, echo=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
 temp <- tempfile()
 download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2", temp, mode = "wb")
@@ -33,7 +33,27 @@ aggHarm <- aggregate(StormDataHarm$HARMED, list(Event = StormDataHarm$EVTYPE), s
 aggHarm <- arrange(aggHarm, desc(x))
 ```
 
-In Figure 1 we see the top five weather events that cause the most harm to public health. 
+In Figure 1 we see the top five weather events that cause the most harm to public health in the United States from 1950 to 2011. It is clear that tornados are the biggest contributor, with 96,979 cases of death or injury, followed by excessive heat with `r aggHarm[2,2]` cases.
 ```{r, echo=TRUE}
 ggplot(data = aggHarm[1:5,], aes(Event, x)) + geom_bar(stat="identity") + ylab("Number of cases")
 ```
+
+### Severe weather and the economy
+Here we investigate how severe weather events affect the United States economy. The columns selected are organized as follows: "EVTYPE" is the event type, "PROPDMG" and "CROPDMG" refer to damage of property and crops respectively. These are the coefficients to "PROPDMGEXP" and "CROPDMGEXP" which take on the values "K" or "k" for $1,000, "M" or "m" for $1,000,000 and "B" or "b" for $1,000,000,000. The expense for each extreme weather event is added up and sorted in descending order.
+```{r, echo=TRUE}
+StormDataExpense <- select(StormData, EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)
+StormDataExpense <- mutate(StormDataExpense, EXPENSE = 
+                             {ifelse(PROPDMGEXP == "K" | PROPDMGEXP == "k", PROPDMG * 1000, 
+                              ifelse(PROPDMGEXP == "M" | PROPDMGEXP == "m", PROPDMG * 1000000,
+                              ifelse(PROPDMGEXP == "B" | PROPDMGEXP == "b", PROPDMG * 1000000000,
+                                NA)))})
+
+aggExpense <- aggregate(StormDataExpense$EXPENSE, list(Event = StormDataExpense$EVTYPE), sum, na.rm = TRUE)
+aggExpense <- arrange(aggExpense, desc(x))
+```
+
+In Figure 2 we see the top 5 most expensive weather events in the United States from 1950 to 2011. It shows that Floods ("FLOO") have the most devastating effect, costing 145 billion dollars. This is followed by hurricanes/typhoons ("HURR") at 69 billion dollars.
+```{r, echo=TRUE}
+ggplot(data = aggExpense[1:5,], aes(Event, x)) + geom_bar(stat="identity") + scale_x_discrete(labels =  abbreviate)+ ylab("Cost in dollars")
+```
+
